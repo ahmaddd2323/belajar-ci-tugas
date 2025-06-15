@@ -86,4 +86,4 @@ Proyek menggunakan struktur MVC CodeIgniter 4:
   - v_produk.php - Tampilan produk
   - v_keranjang.php - Halaman keranjang
 - public/img - Gambar produk dan aset
-- public/NiceAdmin - Template admin
+- public/NiceAdmin - Template admin
