@@ -33,21 +33,19 @@ $password = [
                     <h5 class="card-title text-center pb-0 fs-4">Login to Your Account</h5>
                     <p class="text-center small">Enter your username & password to login</p>
                   </div>
-
-                    <?php
+                  <?php
                     if (session()->getFlashData('failed')) {
-                    ?>
-                        <div class="col-12 alert alert-danger" role="alert">
-                            <hr>
-                            <p class="mb-0">
-                                <?= session()->getFlashData('failed') ?>
-                            </p>
-                         </div>
-                    <?php
-                    }
-                    ?>
-
-<?= form_open('login', 'class = "row g-3 needs-validation"') ?>
+                ?>
+                <div class="col-12 alert alert-danger" role="alert">
+                    <hr>
+                    <p class="mb-0">
+                        <?= session()->getFlashData('failed') ?>
+                    </p>
+                </div>
+            <?php
+            }
+            ?>
+                  <?= form_open('login', 'class = "row g-3 needs-validation"') ?>
 
 <div class="col-12">
     <label for="yourUsername" class="form-label">Username</label>

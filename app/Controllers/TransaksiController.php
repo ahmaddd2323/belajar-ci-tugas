@@ -21,7 +21,7 @@ class TransaksiController extends BaseController
         $this->client = new \GuzzleHttp\Client();
         $this->apiKey = env('COST_KEY');
         $this->transaction = new TransactionModel(); 
-        $this->transaction_detail = new TransactionDetailModel(); 
+        $this->transaction_detail = new TransactionDetailModel();
     }
 
     public function index()
@@ -71,17 +71,15 @@ class TransaksiController extends BaseController
         session()->setflashdata('success', 'Keranjang Berhasil Dihapus');
         return redirect()->to(base_url('keranjang'));
     }
-
     public function checkout()
-    {
+{
     $data['items'] = $this->cart->contents();
     $data['total'] = $this->cart->total();
 
     return view('v_checkout', $data);
-    }
-
-    public function getLocation()
-    {
+}
+public function getLocation()
+{
 		//keyword pencarian yang dikirimkan dari halaman checkout
     $search = $this->request->getGet('search');
 
@@ -97,10 +95,10 @@ class TransaksiController extends BaseController
 
     $body = json_decode($response->getBody(), true); 
     return $this->response->setJSON($body['data']);
-    }
+}
 
-    public function getCost()
-    { 
+public function getCost()
+{ 
 		//ID lokasi yang dikirimkan dari halaman checkout
     $destination = $this->request->getGet('destination');
 
@@ -136,9 +134,8 @@ class TransaksiController extends BaseController
 
     $body = json_decode($response->getBody(), true); 
     return $this->response->setJSON($body['data']);
-    }
-
-    public function buy()
+}
+public function buy()
 {
     if ($this->request->getPost()) { 
         $dataForm = [

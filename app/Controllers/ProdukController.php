@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\ProductModel;
-use Dompdf\Dompdf; 
+use Dompdf\Dompdf;
 
 class ProdukController extends BaseController
 {
@@ -23,15 +23,15 @@ class ProdukController extends BaseController
     }
 
     public function create()
-    {
-        $dataFoto = $this->request->getFile('foto');
+{
+    $dataFoto = $this->request->getFile('foto');
 
-        $dataForm = [
-            'nama' => $this->request->getPost('nama'),
-            'harga' => $this->request->getPost('harga'),
-            'jumlah' => $this->request->getPost('jumlah'),
-            'created_at' => date("Y-m-d H:i:s")
-        ];
+    $dataForm = [
+        'nama' => $this->request->getPost('nama'),
+        'harga' => $this->request->getPost('harga'),
+        'jumlah' => $this->request->getPost('jumlah'),
+        'created_at' => date("Y-m-d H:i:s")
+    ];
 
     if ($dataFoto->isValid()) {
         $fileName = $dataFoto->getRandomName();
@@ -86,7 +86,6 @@ public function delete($id)
 
     return redirect('produk')->with('success', 'Data Berhasil Dihapus');
 }
-
 public function download()
 {
 		//get data from database
