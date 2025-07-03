@@ -2,9 +2,9 @@
 
 namespace App\Controllers;
 
-
 use App\Models\TransactionModel;
 use App\Models\TransactionDetailModel;
+use App\Models\DiscountModel;
 
 class TransaksiController extends BaseController
 {
@@ -14,18 +14,15 @@ class TransaksiController extends BaseController
     protected $transaction;
     protected $transactiondetail;
 
-
     function __construct()
     {
         helper('number');
         helper('form');
         $this->cart = \Config\Services::cart();
-
         $this->client = new \GuzzleHttp\Client();
         $this->apiKey = env('COST_KEY');
         $this->transaction = new TransactionModel(); 
-        $this->transaction_detail = new TransactionDetailModel();
-
+        $this->transaction_detail = new TransactionDetailModel(); 
     }
 
     public function index()
@@ -76,15 +73,32 @@ class TransaksiController extends BaseController
         return redirect()->to(base_url('keranjang'));
     }
 
-    public function checkout()
-{
-    $data['items'] = $this->cart->contents();
-    $data['total'] = $this->cart->total();
+            public function checkout()
+        {
+            $cart = $this->cart;
+            $total = $cart->total();
+            $items = $cart->contents();
+            $discount = 0;
 
-    return view('v_checkout', $data);
-}
-public function getLocation()
-{
+            $discountModel = new DiscountModel();
+            $today = date('Y-m-d');
+            $active = $discountModel->where('tanggal', $today)->first();
+
+            if ($active) {
+                $discount = (int) $active['nominal'];
+            }
+
+            $data = [
+                'items'    => $items,
+                'total'    => $total,
+                'discount' => $discount
+            ];
+
+            return view('v_checkout', $data);
+        }
+
+    public function getLocation()
+    {
 		//keyword pencarian yang dikirimkan dari halaman checkout
     $search = $this->request->getGet('search');
 
@@ -100,10 +114,10 @@ public function getLocation()
 
     $body = json_decode($response->getBody(), true); 
     return $this->response->setJSON($body['data']);
-}
+    }
 
-public function getCost()
-{ 
+    public function getCost()
+    { 
 		//ID lokasi yang dikirimkan dari halaman checkout
     $destination = $this->request->getGet('destination');
 
@@ -139,40 +153,52 @@ public function getCost()
 
     $body = json_decode($response->getBody(), true); 
     return $this->response->setJSON($body['data']);
-}
-public function buy()
+    }
+
+    public function buy() 
 {
     if ($this->request->getPost()) { 
+        // Simpan data transaksi utama
         $dataForm = [
-            'username' => $this->request->getPost('username'),
-            'total_harga' => $this->request->getPost('total_harga'),
-            'alamat' => $this->request->getPost('alamat'),
-            'ongkir' => $this->request->getPost('ongkir'),
-            'status' => 0,
-            'created_at' => date("Y-m-d H:i:s"),
-            'updated_at' => date("Y-m-d H:i:s")
+            'username'     => $this->request->getPost('username'),
+            'total_harga'  => $this->request->getPost('total_harga'),
+            'alamat'       => $this->request->getPost('alamat'),
+            'ongkir'       => $this->request->getPost('ongkir'),
+            'status'       => 0,
+            'created_at'   => date("Y-m-d H:i:s"),
+            'updated_at'   => date("Y-m-d H:i:s")
         ];
 
         $this->transaction->insert($dataForm);
-
         $last_insert_id = $this->transaction->getInsertID();
 
+        // Ambil nilai diskon dari tabel discount berdasarkan tanggal hari ini
+        $discountModel = new \App\Models\DiscountModel();
+        $today = date('Y-m-d');
+        $diskonData = $discountModel->where('tanggal', $today)->first();
+        $discount = $diskonData['nominal'] ?? 0;
+
+        // Simpan detail transaksi
         foreach ($this->cart->contents() as $value) {
+            $harga_asli   = $value['price'];
+            $qty          = $value['qty'];
+            $harga_akhir  = max($harga_asli - $discount, 0); // hindari harga negatif
+            $subtotal     = $harga_akhir * $qty;
+
             $dataFormDetail = [
                 'transaction_id' => $last_insert_id,
-                'product_id' => $value['id'],
-                'jumlah' => $value['qty'],
-                'diskon' => 0,
-                'subtotal_harga' => $value['qty'] * $value['price'],
-                'created_at' => date("Y-m-d H:i:s"),
-                'updated_at' => date("Y-m-d H:i:s")
+                'product_id'     => $value['id'],
+                'jumlah'         => $qty,
+                'diskon'         => $discount,
+                'subtotal_harga' => $subtotal,
+                'created_at'     => date("Y-m-d H:i:s"),
+                'updated_at'     => date("Y-m-d H:i:s")
             ];
 
             $this->transaction_detail->insert($dataFormDetail);
         }
 
         $this->cart->destroy();
- 
         return redirect()->to(base_url());
     }
 }

@@ -30,34 +30,32 @@ class ApiController extends ResourceController
      * @return ResponseInterface
      */
     public function index()
-    {
-        $data = [ 
-            'results' => [],
-            'status' => ["code" => 401, "description" => "Unauthorized"]
-        ];
-
-        $headers = $this->request->headers(); 
-
-        array_walk($headers, function (&$value, $key) {
-            $value = $value->getValue();
-        });
-
-        if(array_key_exists("Key", $headers)){
-            if ($headers["Key"] == $this->apiKey) {
-                $penjualan = $this->transaction->findAll();
-                
-                foreach ($penjualan as &$pj) {
-                    $pj['details'] = $this->transaction_detail->where('transaction_id', $pj['id'])->findAll();
-                }
-
-                $data['status'] = ["code" => 200, "description" => "OK"];
-                $data['results'] = $penjualan;
-
-            }
-        } 
-
-        return $this->respond($data);
+{
+    $key = $this->request->getHeaderLine('key');
+    if ($key !== 'random123678abcghi') {
+        return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
     }
+
+    $transaksi = $this->transaction->findAll();
+
+    foreach ($transaksi as &$row) {
+        $detail = $this->transaction_detail
+            ->where('transaction_id', $row['id'])
+            ->selectSum('jumlah')
+            ->first();
+
+        $row['jumlah_item'] = $detail['jumlah'] ?? 0;
+
+        // Format status
+        $row['status'] = $row['status'] == 1 ? 'Sudah Selesai' : 'Belum Selesai';
+    }
+
+    return $this->response->setJSON([
+        'status' => true,
+        'results' => $transaksi
+    ]);
+}
+
 
     /**
      * Return the properties of a resource object.
@@ -126,4 +124,4 @@ class ApiController extends ResourceController
     {
         //
     }
-}
+} 

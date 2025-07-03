@@ -1,42 +1,62 @@
 <?= $this->extend('layout') ?>
 <?= $this->section('content') ?>
-<?php
-if (session()->getFlashData('success')) {
-?>
+
+<?php if (session()->getFlashdata('success')): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <?= session()->getFlashData('success') ?>
+        <?= session()->getFlashdata('success') ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-<?php
-}
-?>
-<?php echo form_open('keranjang/edit') ?>
-<!-- Table with stripped rows -->
+<?php endif; ?>
+
+<?= form_open('keranjang/edit') ?>
+
+<!-- Notifikasi Diskon -->
+<?php if (session()->get('diskon_nominal')): ?>
+    <div class="alert alert-success">
+        <i class="bi bi-tag"></i> Diskon Hari Ini: Rp<?= number_format(session()->get('diskon_nominal')) ?> per item
+    </div>
+<?php endif; ?>
+
 <table class="table datatable">
     <thead>
         <tr>
-            <th scope="col">Nama</th>
-            <th scope="col">Foto</th>
-            <th scope="col">Harga</th>
-            <th scope="col">Jumlah</th>
-            <th scope="col">Subtotal</th>
-            <th scope="col">Aksi</th>
+            <th>Nama</th>
+            <th>Foto</th>
+            <th>Harga</th>
+            <th>Jumlah</th>
+            <th>Subtotal</th>
+            <th>Aksi</th>
         </tr>
     </thead>
     <tbody>
         <?php
         $i = 1;
+        $total = 0;
+        $diskon = session()->get('discount_nominal') ?? 0;
+
         if (!empty($items)) :
-            foreach ($items as $index => $item) :
+            foreach ($items as $item) :
+                $hargaAsli = $item['options']['harga_asli'] ?? $item['price'];
+                $hargaDiskon = max($hargaAsli - $diskon, 0);
+                $subtotal = $hargaDiskon * $item['qty'];
+                $total += $subtotal;
         ?>
                 <tr>
-                    <td><?php echo $item['name'] ?></td>
-                    <td><img src="<?php echo base_url() . "img/" . $item['options']['foto'] ?>" width="100px"></td>
-                    <td><?php echo number_to_currency($item['price'], 'IDR') ?></td>
-                    <td><input type="number" min="1" name="qty<?php echo $i++ ?>" class="form-control" value="<?php echo $item['qty'] ?>"></td>
-                    <td><?php echo number_to_currency($item['subtotal'], 'IDR') ?></td>
+                    <td><?= esc($item['name']) ?></td>
                     <td>
-                        <a href="<?php echo base_url('keranjang/delete/' . $item['rowid'] . '') ?>" class="btn btn-danger"><i class="bi bi-trash"></i></a>
+                        <?php if (!empty($item['options']['foto'])): ?>
+                            <img src="<?= base_url('img/' . esc($item['options']['foto'])) ?>" width="100px">
+                        <?php endif; ?>
+                    </td>
+                    <td><?= number_to_currency($hargaDiskon, 'IDR') ?></td>
+                    <td>
+                        <input type="number" name="qty<?= $i++ ?>" min="1" class="form-control" value="<?= esc($item['qty']) ?>">
+                    </td>
+                    <td><?= number_to_currency($subtotal, 'IDR') ?></td>
+                    <td>
+                        <a href="<?= base_url('keranjang/delete/' . esc($item['rowid'])) ?>" class="btn btn-danger" onclick="return confirm('Yakin ingin menghapus item ini?')">
+                            <i class="bi bi-trash"></i>
+                        </a>
                     </td>
                 </tr>
         <?php
@@ -45,17 +65,16 @@ if (session()->getFlashData('success')) {
         ?>
     </tbody>
 </table>
-<!-- End Table with stripped rows -->
+
 <div class="alert alert-info">
-    <?php echo "Total = " . number_to_currency($total, 'IDR') ?>
+    <strong>Total = <?= number_to_currency($total, 'IDR') ?></strong>
 </div>
 
 <button type="submit" class="btn btn-primary">Perbarui Keranjang</button>
-<a class="btn btn-warning" href="<?php echo base_url() ?>keranjang/clear">Kosongkan Keranjang</a>
-
+<a href="<?= base_url('keranjang/clear') ?>" class="btn btn-warning">Kosongkan Keranjang</a>
 <?php if (!empty($items)) : ?>
-    <a class="btn btn-success" href="<?php echo base_url() ?>checkout">Selesai Belanja</a>
+    <a href="<?= base_url('checkout') ?>" class="btn btn-success">Selesai Belanja</a>
 <?php endif; ?>
 
-<?php echo form_close() ?>
+<?= form_close() ?>
 <?= $this->endSection() ?>

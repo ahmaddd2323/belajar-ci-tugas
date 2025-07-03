@@ -48,3 +48,12 @@ $routes->get('contact', 'ContactController::index', ['filter' => 'auth']);
 $routes->get('contact', 'ContactController::index', ['filter' => 'redirect']);
 $routes->get('profile', 'Home::profile', ['filter' => 'auth']);
 $routes->resource('api', ['controller' => 'apiController']);
+
+$routes->group('', ['filter' => 'auth'], function($routes) {
+    $routes->get('discount', 'DiscountController::index');
+    $routes->get('discount/create', 'DiscountController::create');
+    $routes->post('discount/store', 'DiscountController::store');
+    $routes->get('discount/edit/(:num)', 'DiscountController::edit/$1');
+    $routes->post('discount/update/(:num)', 'DiscountController::update/$1');
+    $routes->post('discount/delete/(:num)', 'DiscountController::delete/$1');
+});
